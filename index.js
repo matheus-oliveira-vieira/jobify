@@ -54,17 +54,35 @@ app.get('/admin/vagas', async(request, response) =>{
     const vagas = await db.all('select * from vagas;')
     response.render('admin/vagas', {vagas })
 })
+//ok
+app.get('/admin/categorias', async(request, response) =>{
+    const db = await dbConnection
+    const categorias = await db.all('select * from categorias;')
+    response.render('admin/categorias', {categorias })
+})
 
 app.get('/admin/vagas/delete/:id', async(request, response) =>{
     const db = await dbConnection
     const vagas = await db.all('delete from vagas where id = ' + request.params.id)
     response.redirect('/admin/vagas')
 })
+//ok
+app.get('/admin/categorias/delete/:id', async(request, response) =>{
+    const db = await dbConnection
+    const vagas = await db.all('delete from categorias where id = ' + request.params.id)
+    response.redirect('/admin/categorias')
+})
 
 app.get('/admin/vagas/nova', async(request, response) =>{ 
     const db = await dbConnection
     const categorias = await db.all('select * from categorias')
     response.render('admin/nova-vaga', {categorias})
+
+})
+//ok
+app.get('/admin/categorias/nova', async(request, response) =>{ 
+    
+    response.render('admin/nova-categoria')
 
 })
 
@@ -76,11 +94,26 @@ app.post('/admin/vagas/nova', async(request, response) =>{
 
 })
 
+app.post('/admin/categorias/nova', async(request, response) =>{ 
+    const categoria = request.body
+    const db = await dbConnection
+    await db.run(`insert into categorias (categoria) values ('${categoria}')`)
+    response.redirect('/admin/categorias')
+
+})
+
 app.get('/admin/vagas/editar/:id', async(request, response) =>{ 
     const db = await dbConnection
     const categorias = await db.all('select * from categorias')
     const vaga = await db.get('select * from vagas where id = '+request.params.id)
     response.render('admin/editar-vaga', {categorias, vaga})
+
+})
+
+app.get('/admin/categorias/editar/:id', async(request, response) =>{ 
+    const db = await dbConnection
+    const categorias = await db.get('select * from categorias where id = '+request.params.id)
+    response.render('admin/editar-categoria', {categorias})
 
 })
 
@@ -93,12 +126,21 @@ app.post('/admin/vagas/editar/:id', async(request, response) =>{
 
 })
 
+app.post('/admin/categorias/editar/:id', async(request, response) =>{ 
+    const categoria = request.body
+    const id = request.params.id
+    const db = await dbConnection
+    await db.run(`update categorias set categoria = '${categoria}' where id = ${id} `)
+    response.redirect('/admin/categorias')
+
+})
+
 
 const init = async () =>{
     const db = await dbConnection
     await db.run('create table if not exists categorias (id INTEGER PRIMARY KEY, categoria TEXT);')
     await db.run('create table if not exists vagas (id INTEGER PRIMARY KEY, categoria INTEGER, titulo TEXT, descricao TEXT);')
-    //const categoria = 'Marketing Team'
+    //const categoria = 'Teste de Categoria Team'
     //await db.run(`insert into categorias (categoria) values ('${categoria}')`)
     //const vaga = 'Social Media (San Francisco)'
     //const descricao = 'Vaga para Marketing Digital para o Fullstack'
