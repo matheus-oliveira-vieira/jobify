@@ -95,7 +95,7 @@ app.post('/admin/vagas/nova', async(request, response) =>{
 })
 
 app.post('/admin/categorias/nova', async(request, response) =>{ 
-    const categoria = request.body
+    const {categoria} = request.body
     const db = await dbConnection
     await db.run(`insert into categorias (categoria) values ('${categoria}')`)
     response.redirect('/admin/categorias')
@@ -127,7 +127,7 @@ app.post('/admin/vagas/editar/:id', async(request, response) =>{
 })
 
 app.post('/admin/categorias/editar/:id', async(request, response) =>{ 
-    const categoria = request.body
+    const {categoria} = request.body
     const id = request.params.id
     const db = await dbConnection
     await db.run(`update categorias set categoria = '${categoria}' where id = ${id} `)
