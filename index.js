@@ -8,9 +8,8 @@ const port = process.env.PORT || 3000
 
 const categoriaMod = require('./models/categoria')
 const vagaMod = require('./models/vaga')
-const vagaCont = require('./controllers/vagas')
-const categoriaCont = require('./controllers/categorias')
-const homeCont = require('./controllers/home')
+const vagaRouter = require('./routes/vagas')
+const categoriaRouter = require('./routes/categorias')
 
 app.use('/admin', (request, response, next) => {
     if(request.hostname === 'localhost'){
@@ -52,45 +51,15 @@ app.get('/', async(request, response) =>{
 
 let db = null;
 
+app.use(vagaRouter(db, dbConnection))
 
-app.get('/vaga/:id', vagaCont.getVagas(db, dbConnection))
+app.use(categoriaRouter(db, dbConnection))
+
+
 
 app.get('/admin', async(request, response) =>{
     response.render('admin/home')
 })
-
-app.get('/admin/vagas', async(request, response) =>{
-    response.render('admin/vagas')
-})
-
-app.get('/admin/categorias', async(request, response) =>{
-    response.render('admin/categorias')
-})
-
-app.get('/admin/vagas/delete/:id', vagaCont.deleteVagas(db, dbConnection))
-
-app.get('/admin/categorias/delete/:id', categoriaCont.deleteCategorias(db, dbConnection))
-
-app.get('/admin/vagas/nova', async(request, response) =>{ 
-    response.render('admin/nova-vaga')
-})
-
-app.get('/admin/categorias/nova', async(request, response) =>{ 
-    response.render('admin/nova-categoria')
-})
-
-app.post('/admin/vagas/nova', vagaCont.inserirVagas(db, dbConnection))
-
-app.post('/admin/categorias/nova', categoriaCont.inserirCategorias(db, dbConnection))
-
-app.get('/admin/vagas/editar/:id', vagaCont.getVagasId(db, dbConnection))
-
-app.get('/admin/categorias/editar/:id', categoriaCont.getCategoriasId(db, dbConnection))
-
-app.post('/admin/vagas/editar/:id', vagaCont.editaVagas(db, dbConnection))
-
-app.post('/admin/categorias/editar/:id', categoriaCont.editaCategorias(db, dbConnection))
-
 
 const init = async () =>{
     const db = await dbConnection
