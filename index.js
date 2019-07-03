@@ -8,6 +8,9 @@ const port = process.env.PORT || 3000
 
 const categoriaMod = require('./models/categoria')
 const vagaMod = require('./models/vaga')
+const vagaCont = require('./controllers/vagas')
+const categoriaCont = require('./controllers/categorias')
+const homeCont = require('./controllers/home')
 
 app.use('/admin', (request, response, next) => {
     if(request.hostname === 'localhost'){
@@ -23,118 +26,70 @@ app.set('view engine', 'ejs')
 app.use(express.static(path.join(__dirname, 'public')))
 app.use(bodyParser.urlencoded({ extended: true }))
 
-app.get('/', async(request, response) =>{
+let locals = null
+app.use(async(req, res, next) => {
     const db = await dbConnection
-    const categoriasDb = await categoriaMod.getCategorias(db)()
+    const categorias = await categoriaMod.getCategorias(db)()
     const vagas = await vagaMod.getVagas(db)()
-    const categorias = categoriasDb.map(cat => {
+    locals = res.locals = {
+        categorias, vagas
+    }
+    next()
+    return locals
+})
+
+app.get('/', async(request, response) =>{
+    const categoriasDb = locals.categorias.map(cat => {
         return {
             ...cat,
-            vagas: vagas.filter( vaga => vaga.categoria === cat.id)
+            vagas: locals.vagas.filter( vaga => vaga.categoria === cat.id)
         }
     })
     response.render('home', {
-        categorias
+        categorias: categoriasDb
     })
 })
 
-app.get('/vaga/:id', async(request, response) =>{
-    const db = await dbConnection
-    const vaga = await vagaMod.getVagasById(db)(request.params.id)
-    response.render('vaga', {
-        vaga
-    })
-})
+let db = null;
+
+
+app.get('/vaga/:id', vagaCont.getVagas(db, dbConnection))
 
 app.get('/admin', async(request, response) =>{
     response.render('admin/home')
 })
 
 app.get('/admin/vagas', async(request, response) =>{
-    const db = await dbConnection
-    const vagas = await vagaMod.getVagas(db)()
-    response.render('admin/vagas', {vagas })
-})
-//ok
-app.get('/admin/categorias', async(request, response) =>{
-    const db = await dbConnection
-    const categorias = await categoriaMod.getCategorias(db)()
-    response.render('admin/categorias', {categorias })
+    response.render('admin/vagas')
 })
 
-app.get('/admin/vagas/delete/:id', async(request, response) =>{
-    const db = await dbConnection
-    const vagas = await vagaMod.deleteVagasById(db)(request.params.id)
-    response.redirect('/admin/vagas')
+app.get('/admin/categorias', async(request, response) =>{
+    response.render('admin/categorias')
 })
-//ok
-app.get('/admin/categorias/delete/:id', async(request, response) =>{
-    const db = await dbConnection
-    const vagas = await categoriaMod.deleteCategoriasById(db) (request.params.id)
-    response.redirect('/admin/categorias')
-})
+
+app.get('/admin/vagas/delete/:id', vagaCont.deleteVagas(db, dbConnection))
+
+app.get('/admin/categorias/delete/:id', categoriaCont.deleteCategorias(db, dbConnection))
 
 app.get('/admin/vagas/nova', async(request, response) =>{ 
-    const db = await dbConnection
-    const categorias = await categoriaMod.getCategorias(db)()
-    response.render('admin/nova-vaga', {categorias})
-
+    response.render('admin/nova-vaga')
 })
-//ok
+
 app.get('/admin/categorias/nova', async(request, response) =>{ 
-    
     response.render('admin/nova-categoria')
-
 })
 
-app.post('/admin/vagas/nova', async(request, response) =>{ 
-    const {titulo, descricao, categoria} = request.body
-    const db = await dbConnection
-    await vagaMod.InsereVagas(db)(categoria, titulo, descricao)
-    response.redirect('/admin/vagas')
+app.post('/admin/vagas/nova', vagaCont.inserirVagas(db, dbConnection))
 
-})
+app.post('/admin/categorias/nova', categoriaCont.inserirCategorias(db, dbConnection))
 
-app.post('/admin/categorias/nova', async(request, response) =>{ 
-    const {categoria} = request.body
-    const db = await dbConnection
-    await categoriaMod.InsereCategorias(db)(categoria)
-    response.redirect('/admin/categorias')
+app.get('/admin/vagas/editar/:id', vagaCont.getVagasId(db, dbConnection))
 
-})
+app.get('/admin/categorias/editar/:id', categoriaCont.getCategoriasId(db, dbConnection))
 
-app.get('/admin/vagas/editar/:id', async(request, response) =>{ 
-    const db = await dbConnection
-    const categorias = await categoriaMod.getCategorias(db) ()
-    const vaga = await vagaMod.getVagasById(db) (request.params.id)
-    response.render('admin/editar-vaga', {categorias, vaga})
+app.post('/admin/vagas/editar/:id', vagaCont.editaVagas(db, dbConnection))
 
-})
-
-app.get('/admin/categorias/editar/:id', async(request, response) =>{ 
-    const db = await dbConnection
-    const categorias = await categoriaMod.getCategoriasById(db) (request.params.id)
-    response.render('admin/editar-categoria', {categorias})
-
-})
-
-app.post('/admin/vagas/editar/:id', async(request, response) =>{ 
-    const {titulo, descricao, categoria} = request.body
-    const id = request.params.id
-    const db = await dbConnection
-    await vagaMod.AtualizaVagas(db)(categoria, titulo, descricao, id)
-    response.redirect('/admin/vagas')
-
-})
-
-app.post('/admin/categorias/editar/:id', async(request, response) =>{ 
-    const {categoria} = request.body
-    const id = request.params.id
-    const db = await dbConnection
-    await categoriaMod.AtualizaCategoria(db)(categoria, id)
-    response.redirect('/admin/categorias')
-
-})
+app.post('/admin/categorias/editar/:id', categoriaCont.editaCategorias(db, dbConnection))
 
 
 const init = async () =>{
