@@ -8,8 +8,7 @@ const port = process.env.PORT || 3000
 
 const categoriaMod = require('./models/categoria')
 const vagaMod = require('./models/vaga')
-const vagaRouter = require('./routes/vagas')
-const categoriaRouter = require('./routes/categorias')
+const routes = require('./routes')
 
 app.use('/admin', (request, response, next) => {
     if(request.hostname === 'localhost'){
@@ -51,9 +50,7 @@ app.get('/', async(request, response) =>{
 
 let db = null;
 
-app.use(vagaRouter(db, dbConnection))
-
-app.use(categoriaRouter(db, dbConnection))
+app.use(routes(db, dbConnection))
 
 
 
